@@ -12,14 +12,19 @@ namespace SiteServer.CMS.Plugin.Impl
 
         public IMetadata Metadata { get; }
 
-        public Menu PluginMenu { get; private set; }
-        public Func<int, Menu> SiteMenuFunc { get; private set; }
+        public string SystemDefaultPageUrl { get; private set; }
+        public string HomeDefaultPageUrl { get; private set; }
+
+        public List<Func<Menu>> SystemMenuFuncs { get; private set; }
+        public List<Func<int, Menu>> SiteMenuFuncs { get; private set; }
+        public List<Func<Menu>> HomeMenuFuncs { get; private set; }
+        public List<Func<IContentInfo, Menu>> ContentMenuFuncs { get; private set; }
+
         public string ContentTableName { get; private set; }
         public bool IsApiAuthorization { get; private set; }
 
         public List<TableColumn> ContentTableColumns { get; private set; }
         public Dictionary<string, List<TableColumn>> DatabaseTables { get; private set; }
-        public List<Menu> ContentMenus { get; private set; }
 
         public event EventHandler<ContentEventArgs> ContentAddCompleted;
 
@@ -68,15 +73,57 @@ namespace SiteServer.CMS.Plugin.Impl
             Metadata = metadata;
         }
 
-        public IService AddSystemMenu(Menu menu)
+        public IService SetSystemDefaltPage(string pageUrl)
         {
-            PluginMenu = menu;
+            SystemDefaultPageUrl = pageUrl;
             return this;
         }
 
-        public IService AddSiteMenu(Func<int, Menu> siteMenuFunc)
+        public IService SetHomeDefaultPage(string pageUrl)
         {
-            SiteMenuFunc = siteMenuFunc;
+            HomeDefaultPageUrl = pageUrl;
+            return this;
+        }
+
+        public IService AddSystemMenu(Func<Menu> menu)
+        {
+            if (SystemMenuFuncs == null)
+            {
+                SystemMenuFuncs = new List<Func<Menu>>();
+            }
+            SystemMenuFuncs.Add(menu);
+            return this;
+        }
+
+        public IService AddSiteMenu(Func<int, Menu> menuFunc)
+        {
+            if (SiteMenuFuncs == null)
+            {
+                SiteMenuFuncs = new List<Func<int, Menu>>();
+            }
+            SiteMenuFuncs.Add(menuFunc);
+            return this;
+        }
+
+        public IService AddHomeMenu(Func<Menu> menu)
+        {
+            if (HomeMenuFuncs == null)
+            {
+                HomeMenuFuncs = new List<Func<Menu>>();
+            }
+            HomeMenuFuncs.Add(menu);
+            return this;
+        }
+
+        public IService AddContentMenu(Func<IContentInfo, Menu> menuFunc)
+        {
+            if (ContentMenuFuncs == null)
+            {
+                ContentMenuFuncs = new List<Func<IContentInfo, Menu>>();
+            }
+
+            ContentMenuFuncs.Add(menuFunc);
+
             return this;
         }
 
@@ -96,18 +143,6 @@ namespace SiteServer.CMS.Plugin.Impl
             }
 
             DatabaseTables[tableName] = tableColumns;
-
-            return this;
-        }
-
-        public IService AddContentMenu(Menu link)
-        {
-            if (ContentMenus == null)
-            {
-                ContentMenus = new List<Menu>();
-            }
-
-            ContentMenus.Add(link);
 
             return this;
         }

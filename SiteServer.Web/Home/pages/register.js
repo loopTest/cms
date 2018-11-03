@@ -1,6 +1,6 @@
-var $api = new apiUtils.Api(apiUrl + '/v1/users');
-var $captchaGetUrl = apiUrl + '/v1/captcha/REGISTER-CAPTCHA';
-var $captchaCheckApi = new apiUtils.Api(apiUrl + '/v1/captcha/REGISTER-CAPTCHA/actions/check');
+var $api = new utils.Api('/v1/users');
+var $captchaGetUrl = utils.getApiUrl('/v1/captcha/REGISTER-CAPTCHA');
+var $captchaCheckApi = new utils.Api('/v1/captcha/REGISTER-CAPTCHA/actions/check');
 
 if (window.top != self) {
   window.top.location = self.location;
@@ -14,22 +14,28 @@ var data = {
   captcha: null,
   captchaUrl: null,
   styles: [],
+  groups: [],
+  groupId: 0,
   isAgreement: false,
 };
 
 var methods = {
-  load: function (pageConfig, styles) {
+  load: function (pageConfig, styles, groups) {
     this.pageConfig = pageConfig;
 
-    var userRegistrationAttributes = this.pageConfig.userRegistrationAttributes.split(',');
-    for (var i = 0; i < styles.length; i++) {
-      var style = styles[i];
-      if (userRegistrationAttributes.indexOf(style.attributeName) !== -1) {
-        style.value = style.defaultValue;
+    if (this.pageConfig.userRegistrationAttributes) {
+      var userRegistrationAttributes = this.pageConfig.userRegistrationAttributes.split(',');
+      for (var i = 0; i < styles.length; i++) {
+        var style = styles[i];
+        if (userRegistrationAttributes.indexOf(style.attributeName) !== -1) {
+          style.value = style.defaultValue;
 
-        this.styles.push(style);
+          this.styles.push(style);
+        }
       }
     }
+
+    this.groups = groups;
     this.reload();
   },
   reload: function () {
@@ -39,11 +45,11 @@ var methods = {
   checkCaptcha: function () {
     var $this = this;
 
-    pageUtils.loading(true);
+    utils.loading(true);
     $captchaCheckApi.post({
       captcha: $this.captcha
     }, function (err) {
-      pageUtils.loading(false);
+      utils.loading(false);
 
       if (err) {
         $this.reload();
@@ -62,16 +68,17 @@ var methods = {
 
     var payload = {
       userName: this.userName,
-      password: this.password
+      password: this.password,
+      groupId: this.groupId
     };
     for (var i = 0; i < this.styles.length; i++) {
       var style = this.styles[i];
       payload[style.attributeName] = style.value;
     }
 
-    pageUtils.loading(true);
+    utils.loading(true);
     $api.post(payload, function (err, res) {
-      pageUtils.loading(false);
+      utils.loading(false);
       if (err) {
         $this.reload();
         $this.pageAlert = {
@@ -82,18 +89,18 @@ var methods = {
       }
 
       if (res.isChecked) {
-        swal({
+        alert({
           title: "恭喜，账号注册成功",
-          icon: "success",
-          button: "进入登录页",
+          type: "success",
+          confirmButtonText: "进入登录页"
         }).then(function () {
           location.href = 'login.html';
         });
       } else {
-        swal({
+        alert({
           title: "账号注册成功，请等待管理员审核",
-          icon: "success",
-          button: "进入登录页",
+          type: "success",
+          confirmButtonText: "进入登录页"
         }).then(function () {
           location.href = 'login.html';
         });
@@ -107,9 +114,9 @@ var methods = {
     var $this = this;
     this.$validator.validate().then(function (result) {
       if ($this.pageConfig.isHomeAgreement && !$this.isAgreement) {
-        $this.pageAlert = {
+        return $this.pageAlert = {
           type: 'danger',
-          html: '请勾选“阅读并接受用户协议”'
+          html: '请勾选' + $this.pageConfig.homeAgreementHtml
         };
       }
       if (result) {
@@ -132,8 +139,8 @@ new Vue({
   methods: methods,
   created: function () {
     var $this = this;
-    pageUtils.getConfig('register', function (res) {
-      $this.load(res.value, res.styles);
+    utils.getConfig('register', function (res) {
+      $this.load(res.config, res.styles, res.groups);
     });
   }
 });

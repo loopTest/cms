@@ -1,5 +1,4 @@
-var $api = new apiUtils.Api(apiUrl + "/home/contents");
-var $createApi = new apiUtils.Api(apiUrl + "/home/contents/actions/create");
+var $api = new utils.Api('/home/contents');
 
 Object.defineProperty(Object.prototype, "getProp", {
   value: function (prop) {
@@ -19,7 +18,6 @@ var data = {
   pageType: null,
   page: 1,
   pageContents: [],
-  contentDict: null,
   count: null,
   pages: null,
   sites: [],
@@ -27,7 +25,7 @@ var data = {
   site: {},
   channel: {},
   permissions: {},
-  attributes: null,
+  columns: null,
   pageOptions: null,
   isAllChecked: false
 };
@@ -37,143 +35,100 @@ var methods = {
     this.pageConfig = pageConfig;
     this.sites = sites;
     this.channels = channels;
+    this.loadChannel(site, channel);
+  },
+
+  loadChannel: function (site, channel) {
     this.site = site;
     this.channel = channel;
-    this.loadContents(1);
-  },
-  btnAddClick: function () {
-    location.href = 'pageContentAdd.aspx?siteId=' + this.site.id + '&channelId=' + this.channel.Id;
-  },
-  btnSearchClick: function () {
-    parent.location.href = 'pageContentSearch.aspx?siteId=' + this.site.id + '&channelId=' + this.channel.Id;
-  },
-  btnCreateClick: function () {
-    var $this = this;
-    $this.pageAlert = null;
-    if ($this.selectedContentIds.length === 0) return;
-
-    pageUtils.loading(true);
-    $createApi.post({
-      siteId: $this.site.id,
-      channelId: $this.channel.Id,
-      contentIds: $this.selectedContentIds.join(',')
-    }, function (err, res) {
-      pageUtils.loading(false);
-      if (err) {
-        $this.pageAlert = {
-          type: 'danger',
-          html: err.message
-        };
-        return;
-      }
-
-      $this.pageAlert = {
-        type: "success",
-        html: "内容已添加至生成列队！<a href='createStatus.cshtml?siteId=" + $this.site.id + "'>生成进度查看</a>"
-      };
-    });
-  },
-  btnFuncClick: function (options) {
-    this.pageAlert = null;
-
-    if (options.withoutContents) {
-      pageUtils.openLayer({
-        title: "批量" + options.title,
-        url: "contentsLayer" + options.name + ".cshtml?siteId=" +
-          this.site.id +
-          "&channelId=" +
-          this.channel.Id,
-        full: options.full,
-        width: options.width ? options.width : 700,
-        height: options.height ? options.height : 500
+    if (this.site && this.channel) {
+      Cookies.set('SS-USER-SITE-ID', this.site.id, {
+        expires: 7
       });
-      return;
-    }
+      Cookies.set('SS-USER-CHANNEL-ID', this.channel.id, {
+        expires: 7
+      });
 
-    if (this.selectedContentIds.length === 0) return;
-
-    if (options.redirect) {
-      location.href =
-        "pageContent" + options.name + ".aspx?siteId=" +
-        this.site.id +
-        "&channelId=" +
-        this.channel.Id +
-        "&contentIdCollection=" +
-        this.selectedContentIds.join(",");
+      this.loadContents(1);
     } else {
-      pageUtils.openLayer({
-        title: "批量" + options.title,
-        url: "contentsLayer" +
-          options.name +
-          ".cshtml?siteId=" +
-          this.site.id +
-          "&channelId=" +
-          this.channel.Id +
-          "&contentIds=" +
-          this.selectedContentIds.join(","),
-        full: options.full,
-        width: options.width ? options.width : 700,
-        height: options.height ? options.height : 500
-      });
+      this.pageType = 'Unauthorized'
     }
   },
-  btnContentViewClick: function (contentId) {
-    pageUtils.openLayer({
-      title: "查看内容",
-      url: "contentsLayerView.cshtml?siteId=" +
-        this.site.id +
-        "&channelId=" +
-        this.channel.Id +
-        "&contentId=" +
-        contentId,
-      full: true
+
+  btnAddClick: function () {
+    parent.location.hash = 'pages/contentAdd.html?siteId=' + this.site.id + '&channelId=' + this.channel.id + '&returnUrl=' + encodeURIComponent(parent.location.hash);
+  },
+
+  btnEditClick: function (contentId) {
+    parent.location.hash = 'pages/contentAdd.html?siteId=' + this.site.id + '&channelId=' + this.channel.id + '&contentId=' + contentId + '&returnUrl=' + encodeURIComponent(parent.location.hash);
+  },
+
+  btnLayerClick: function (options) {
+    event.stopPropagation();
+
+    this.pageAlert = null;
+    var url = "pages/contentsLayer" +
+      options.name +
+      ".html?siteId=" +
+      this.site.id +
+      "&channelId=" +
+      this.channel.id;
+    if (options.withContents) {
+      if (this.selectedContentIds.length === 0) return;
+      url += "&contentIds=" + this.selectedContentIds.join(",")
+    } else if (options.contentId) {
+      url += "&contentId=" + options.contentId
+    }
+    url += '&returnUrl=' + encodeURIComponent(parent.location.hash);
+
+    parent.utils.openLayer({
+      title: options.title,
+      url: url,
+      full: options.full,
+      width: options.width ? options.width : 700,
+      height: options.height ? options.height : 500
     });
   },
-  btnContentStateClick: function (contentId) {
-    pageUtils.openLayer({
-      title: "查看审核状态",
-      url: "contentsLayerState.cshtml?siteId=" +
-        this.site.id +
-        "&channelId=" +
-        this.channel.Id +
-        "&contentId=" +
-        contentId,
-      full: true
-    });
-  },
+
   toggleChecked: function (content) {
     content.isSelected = !content.isSelected;
     if (!content.isSelected) {
       this.isAllChecked = false;
     }
   },
+
   selectAll: function () {
     this.isAllChecked = !this.isAllChecked;
     for (var i = 0; i < this.pageContents.length; i++) {
       this.pageContents[i].isSelected = this.isAllChecked;
     }
   },
+
   loadFirstPage: function () {
     if (this.page === 1) return;
     this.loadContents(1);
   },
+
   loadPrevPage: function () {
     if (this.page - 1 <= 0) return;
     this.loadContents(this.page - 1);
   },
+
   loadNextPage: function () {
     if (this.page + 1 > this.pages) return;
     this.loadContents(this.page + 1);
   },
+
   loadLastPage: function () {
     if (this.page + 1 > this.pages) return;
     this.loadContents(this.pages);
   },
+
   onSiteSelect(site) {
     if (site.id === this.site.id) return;
     var $this = this;
     this.pageLoad = false;
-    pageUtils.getConfig({
+    utils.getConfig({
       pageName: 'contents',
       siteId: site.id
     }, function (res) {
@@ -181,19 +136,22 @@ var methods = {
       $this.load(res.value, res.sites, res.channels, res.site, res.channel);
     });
   },
+
   onChannelSelect(channel) {
     if (channel.id === this.channel.id) return;
-    this.channel = channel;
+    this.loadChannel(this.site, channel);
     this.loadContents(1);
   },
+
   onPageSelect(option) {
     this.loadContents(option);
   },
+
   loadContents: function (page) {
     var $this = this;
 
     if ($this.pageLoad) {
-      pageUtils.loading(true);
+      parent.utils.loading(true);
     }
 
     $api.get({
@@ -203,8 +161,8 @@ var methods = {
       },
       function (err, res) {
         if ($this.pageLoad) {
-          pageUtils.loading(false);
-          pageUtils.scrollToTop();
+          parent.utils.loading(false);
+          parent.utils.scrollToTop();
         } else {
           $this.pageLoad = true;
         }
@@ -218,7 +176,7 @@ var methods = {
         }
 
         $this.permissions = res.permissions;
-        $this.attributes = res.attributes;
+        $this.columns = res.columns;
 
         var pageContents = [];
         for (var i = 0; i < res.value.length; i++) {
@@ -262,16 +220,19 @@ var $vue = new Vue({
   },
   created: function () {
     var $this = this;
-    if (authUtils.isAuthenticated()) {
-      pageUtils.getConfig('contents', function (res) {
-        if (res.isUserLoggin) {
-          $this.load(res.value, res.sites, res.channels, res.site, res.channel);
-        } else {
-          authUtils.redirectLogin();
-        }
-      });
-    } else {
-      authUtils.redirectLogin();
-    }
+    var siteId = parseInt(utils.getQueryString('siteId') || Cookies.get('SS-USER-SITE-ID') || 0);
+    var channelId = parseInt(utils.getQueryString('channelId') || Cookies.get('SS-USER-CHANNEL-ID') || 0);
+
+    utils.getConfig({
+      pageName: 'contents',
+      siteId: siteId,
+      channelId: channelId
+    }, function (res) {
+      if (res.value) {
+        $this.load(res.config, res.sites, res.channels, res.site, res.channel);
+      } else {
+        utils.redirectLogin();
+      }
+    });
   }
 });

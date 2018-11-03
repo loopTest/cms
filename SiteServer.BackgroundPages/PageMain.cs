@@ -64,6 +64,8 @@ namespace SiteServer.BackgroundPages
 
         public bool IsConsoleAdministrator => AuthRequest.AdminPermissionsImpl.IsConsoleAdministrator;
 
+        public string DefaultPageUrl => PluginMenuManager.GetSystemDefaultPageUrl(SiteId) ?? "dashboard.cshtml";
+
         public static string GetRedirectUrl()
         {
             return PageUtils.GetSiteServerUrl(nameof(PageMain), null);

@@ -1,6 +1,6 @@
 var data = {
-  pageConfig: null,
   pageUser: null,
+  pageConfig: null,
   pageAlert: null,
   avatarUrl: null,
   uploadUrl: null,
@@ -10,11 +10,9 @@ var data = {
   accountAlertType: "",
   accountAlertMessage: "",
   mobile: "",
-  code: "",
-  isAccountSubmit: false,
+  email: "",
   passwordAlertType: "",
   passwordAlertMessage: "",
-  isPasswordSubmit: false,
   oldPassword: "",
   newPassword: "",
   confirmPassword: "",
@@ -22,17 +20,14 @@ var data = {
 };
 
 var methods = {
-  load: function (pageConfig, styles) {
+  load: function (pageUser, pageConfig, styles) {
+    this.pageUser = pageUser;
     this.pageConfig = pageConfig;
-    this.pageUser = authUtils.getUser();
     this.avatarUrl = this.pageUser.avatarUrl || this.pageConfig.homeDefaultAvatarUrl || '../assets/images/default_avatar.png';
-    this.uploadUrl = apiUrl + '/v1/users/' + this.pageUser.id + '/avatar?userToken=' + authUtils.getToken();
+    this.uploadUrl = utils.getApiUrl('/v1/users/' + this.pageUser.id + '/avatar?userToken=' + utils.getToken());
 
-    this.styles = styles;
-    for (var i = 0; i < this.styles.length; i++) {
-      var style = this.styles[i];
-      style.value = this.pageUser[_.camelCase(style.attributeName)];
-    }
+    this.mobile = this.pageUser.mobile;
+    this.email = this.pageUser.email;
   },
 
   editSave: function () {
@@ -67,8 +62,8 @@ var methods = {
     }
 
     if (newFile && oldFile && newFile.xhr && newFile.success !== oldFile.success) {
-      authUtils.saveUser(newFile.response.value);
-      this.avatarUrl = newFile.response.value.avatarUrl;
+      this.pageUser = newFile.response.value;
+      this.avatarUrl = this.pageUser.avatarUrl;
     }
   },
 
@@ -88,103 +83,87 @@ var methods = {
   },
 
   updateAccount: function () {
-    if (this.errors.any("account")) return;
-    this.isAccountSubmit = true;
-    if (
-      !this.user.userName ||
-      !this.user.mobile ||
-      (this.mobile !== this.user.mobile && !this.code)
-    )
-      return;
-
-    this.isAccountLoading = true;
+    var $this = this;
     this.accountAlertMessage = "";
 
-    Users.update(this.user)
-      .then(response => {
-        this.isAccountLoading = false;
-        this.mobile = response.data.mobile;
-        this.$store.dispatch("update", response.data);
-        this.accountAlertType = "success";
-        this.accountAlertMessage = "个人资料设置成功";
-      })
-      .catch(error => {
-        this.isAccountLoading = false;
-        this.accountAlertType = "danger";
-        this.accountAlertMessage = error.response.data.message;
-      });
+    this.$validator.validate("account.*").then(function (result) {
+      if (result) {
+        parent.utils.loading(true);
+        new utils.Api('/v1/users/' + $this.pageUser.id).put({
+          mobile: $this.mobile,
+          email: $this.email
+        }, function (err, res) {
+          parent.utils.loading(false);
+
+          if (err) {
+            $this.accountAlertType = "danger";
+            $this.accountAlertMessage = err.message;
+            return;
+          }
+
+          $this.pageUser = res.value;
+          $this.accountAlertType = "success";
+          $this.accountAlertMessage = '登录账号设置修改成功';
+        });
+      }
+    });
   },
 
   updatePassword: function () {
-    this.isPasswordSubmit = true;
-    if (
-      !this.oldPassword ||
-      !this.newPassword ||
-      !this.confirmPassword ||
-      this.newPassword !== this.confirmPassword
-    )
-      return;
-
-    this.isPasswordLoading = true;
+    var $this = this;
     this.passwordAlertMessage = "";
 
-    Users.resetPassword(
-        this.user.userName,
-        this.oldPassword,
-        this.newPassword
-      )
-      .then(() => {
-        this.isPasswordLoading = false;
-        this.passwordAlertType = "success";
-        this.passwordAlertMessage = "新密码设置成功";
-      })
-      .catch(error => {
-        this.isPasswordLoading = false;
-        this.passwordAlertType = "danger";
-        this.passwordAlertMessage = error.response.data.message;
-      });
+    this.$validator.validate("password.*").then(function (result) {
+      if (result) {
+        parent.utils.loading(true);
+        new utils.Api('/v1/users/' + $this.pageUser.id + '/actions/resetPassword').post({
+          password: $this.oldPassword,
+          newPassword: $this.newPassword
+        }, function (err, res) {
+          parent.utils.loading(false);
+
+          if (err) {
+            $this.passwordAlertType = "danger";
+            $this.passwordAlertMessage = err.message;
+            return;
+          }
+
+          $this.pageUser = res.value;
+          $this.passwordAlertType = "success";
+          $this.passwordAlertMessage = '新密码设置成功';
+        });
+      }
+    });
   },
 
   deleteAccount: function () {
     var $this = this;
 
-    swal({
-      title: "永久关闭账户",
-      text: "帐户关闭操作无法撤销，此操作会删除您的帐户以及帐户中的所有数据",
-      icon: "warning",
-      buttons: {
-        cancel: {
-          text: "取 消",
-          value: null,
-          visible: true,
-          className: "",
-          closeModal: true
-        },
-        confirm: {
-          text: "永久关闭账户",
-          value: true,
-          visible: true,
-          className: "",
-          closeModal: true
-        }
-      },
-      dangerMode: true
-    }).then(function (willDelete) {
-      if (willDelete) {
-        pageUtils.loading(true);
+    alert({
+      title: "永久删除账户",
+      text: "帐户删除操作无法撤销，此操作会删除您的帐户以及帐户中的所有数据",
+      type: "warning",
+      confirmButtonClass: 'btn btn-danger',
+      confirmButtonText: '永久删除账户',
+      showCancelButton: true,
+      cancelButtonText: '取 消'
+    }).then(function (result) {
+      if (result.value) {
+        parent.utils.loading(true);
         $this.deleteAlertMessage = "";
 
-        new apiUtils.Api(apiUrl + '/v1/users/' + $this.pageUser.id).delete(null, function (err, res) {
-          pageUtils.loading(false);
+        new utils.Api('/v1/users/' + $this.pageUser.id).delete(null, function (err, res) {
+          parent.utils.loading(false);
 
           if (err) {
             $this.deleteAlertMessage = error.response.data.message;
             return;
           }
 
-          swal({
+          alert({
             title: "账户已关闭",
-            icon: "success"
+            type: "success",
+            showConfirmButton: false
           }).then(function () {
             location.href = 'login.html';
           });
@@ -224,16 +203,12 @@ new Vue({
   methods: methods,
   created: function () {
     var $this = this;
-    if (authUtils.isAuthenticated()) {
-      pageUtils.getConfig('profile', function (res) {
-        if (res.isUserLoggin) {
-          $this.load(res.value, res.styles);
-        } else {
-          authUtils.redirectLogin();
-        }
-      });
-    } else {
-      authUtils.redirectLogin();
-    }
+    utils.getConfig('profile', function (res) {
+      if (res.value) {
+        $this.load(res.value, res.config, res.styles);
+      } else {
+        utils.redirectLogin();
+      }
+    });
   }
 });

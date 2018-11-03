@@ -10,9 +10,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <link rel="shortcut icon" href="../assets/images/favicon.ico">
   <link href="../assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
-  <link href="../assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+  <link href="../assets/css/font-awesome-4.7.0.min.css" rel="stylesheet" type="text/css" />
+  <link href="../assets/css/ionicons-2.0.0.min.css" rel="stylesheet" type="text/css" />
   <link href="../assets/css/siteserver.min.css" rel="stylesheet" type="text/css" />
-  <script src="../assets/js/modernizr.min.js"></script>
+  <script src="../assets/lib/modernizr.min.js"></script>
   <style>
     .nav-tabs .nav-link.active{
       background-color: transparent;
@@ -46,7 +47,7 @@
           <div class="col-12">
             <div class="input-group">
               <div class="input-group-prepend">
-                <span class="input-group-text"><i class="mdi mdi-account"></i></span>
+                <span class="input-group-text"><i class="fa fa-user-circle-o"></i></span>
               </div>
               <input v-model="account" v-bind:class="{ 'is-invalid': pageSubmit && !account }" class="form-control"
                 type="text" v-focus placeholder="请输入用户名/手机号/邮箱">
@@ -58,7 +59,7 @@
           <div class="col-12">
             <div class="input-group">
               <div class="input-group-prepend">
-                <span class="input-group-text"><i class="mdi mdi-key"></i></span>
+                <span class="input-group-text"><i class="fa fa-key"></i></span>
               </div>
               <input v-model="password" v-bind:class="{ 'is-invalid': pageSubmit && !password }" class="form-control"
                 type="password" placeholder="请输入密码">
@@ -70,7 +71,7 @@
           <div class="col-12">
             <div class="input-group">
               <div class="input-group-prepend">
-                <span class="input-group-text"><i class="mdi mdi-code-tags-check"></i></span>
+                <span class="input-group-text"><i class="fa fa-picture-o"></i></span>
               </div>
               <input v-model="captcha" v-bind:class="{ 'is-invalid': pageSubmit && !captcha }" class="form-control"
                 type="text" placeholder="请输入验证码">
@@ -126,20 +127,18 @@
 
 </html>
 
-<script src="../assets/js/jquery-1.9.1.min.js" type="text/javascript"></script>
-<script src="../assets/js/popper.min.js"></script>
-<script src="../assets/js/bootstrap.min.js"></script>
-<script src="../assets/js/lodash-4.17.10.min.js" type="text/javascript"></script>
-<script src="../assets/js/layer-3.1.1/layer.js" type="text/javascript"></script>
-<script src="../assets/js/sweetalert-2.1.0.min.js" type="text/javascript"></script>
-<script src="../assets/js/vue-2.5.16.min.js" type="text/javascript"></script>
-<script src="../assets/js/vee-validate-2.1.0.js"></script>
-<script src="../assets/js/vee-validate-locale-zh_CN-2.1.0.js"></script>
-<script src="../assets/js/js.cookie-2.2.0.js"></script>
-<script src="../assets/utils/apiUtils.js" type="text/javascript"></script>
-<script src="../assets/utils/pageUtils.js" type="text/javascript"></script>
-<script src="../assets/utils/authUtils.js" type="text/javascript"></script>
+<script src="../assets/lib/jquery-1.9.1.min.js" type="text/javascript"></script>
+<script src="../assets/lib/popper.min.js"></script>
+<script src="../assets/lib/bootstrap.min.js"></script>
+<script src="../assets/lib/lodash-4.17.10.min.js" type="text/javascript"></script>
+<script src="../assets/lib/layer-3.1.1/layer.js" type="text/javascript"></script>
+<script src="../assets/lib/sweetalert2-7.28.4.all.min.js" type="text/javascript"></script>
+<script src="../assets/lib/vue-2.5.16.min.js" type="text/javascript"></script>
+<script src="../assets/lib/vee-validate-2.1.0.js"></script>
+<script src="../assets/lib/vee-validate-locale-zh_CN-2.1.0.js"></script>
+<script src="../assets/lib/js.cookie-2.2.0.js"></script>
+<script src="../assets/js/utils.js" type="text/javascript"></script>
 <script src="../config.js" type="text/javascript"></script>
 
-<script src="../assets/js/md5-2.10.0.min.js" type="text/javascript"></script>
+<script src="../assets/lib/md5-2.10.0.min.js" type="text/javascript"></script>
 <script src="login.js" type="text/javascript"></script>

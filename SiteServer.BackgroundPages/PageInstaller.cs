@@ -86,7 +86,7 @@ namespace SiteServer.BackgroundPages
             EBooleanUtils.AddListItems(DdlIsProtectData, "加密", "不加密");
             ControlUtils.SelectSingleItemIgnoreCase(DdlIsProtectData, false.ToString());
 
-            LtlGo.Text = $@"<a class=""btn btn-success m-l-5"" href=""{PageUtils.GetAdminDirectoryUrl(string.Empty)}"">进入后台</a>";
+            LtlGo.Text = $@"<a class=""btn btn-success m-l-5"" href=""{PageUtils.GetAdminUrl(string.Empty)}"">进入后台</a>";
         }
 
         public void DdlSqlDatabaseType_SelectedIndexChanged(object sender, EventArgs e)
@@ -383,7 +383,7 @@ namespace SiteServer.BackgroundPages
                 var databaseType = DatabaseTypeUtils.GetEnumType(DdlSqlDatabaseType.SelectedValue);
                 var connectionString = GetConnectionString(true);
 
-                WebConfigUtils.UpdateWebConfig(isProtectData, databaseType, connectionString, "SiteServer", "Home", StringUtils.GetShortGuid(), false);
+                WebConfigUtils.UpdateWebConfig(isProtectData, databaseType, connectionString, "api", "SiteServer", "Home", StringUtils.GetShortGuid(), false);
 
                 DataProvider.Reset();
 

@@ -659,6 +659,16 @@ namespace SiteServer.CMS.Provider
             UserManager.ClearCache();
         }
 
+        private UserInfo GetByAccount(string account)
+        {
+            if (StringUtils.IsMobile(account))
+            {
+                return GetByMobile(account);
+            }
+
+            return StringUtils.IsEmail(account) ? GetByEmail(account) : GetByUserName(account);
+        }
+
         public UserInfo GetByUserName(string userName)
         {
             if (string.IsNullOrEmpty(userName)) return null;
@@ -679,6 +689,9 @@ namespace SiteServer.CMS.Provider
                 }
                 rdr.Close();
             }
+
+            UserManager.UpdateCache(userInfo);
+
             return userInfo;
         }
 
@@ -702,6 +715,9 @@ namespace SiteServer.CMS.Provider
                 }
                 rdr.Close();
             }
+
+            UserManager.UpdateCache(userInfo);
+
             return userInfo;
         }
 
@@ -725,6 +741,9 @@ namespace SiteServer.CMS.Provider
                 }
                 rdr.Close();
             }
+
+            UserManager.UpdateCache(userInfo);
+
             return userInfo;
         }
 
@@ -748,6 +767,9 @@ namespace SiteServer.CMS.Provider
                 }
                 rdr.Close();
             }
+
+            UserManager.UpdateCache(userInfo);
+
             return userInfo;
         }
 
@@ -928,7 +950,7 @@ namespace SiteServer.CMS.Provider
             return password == decodePassword;
         }
 
-        public bool Validate(string account, string password, bool isPasswordMd5, out string userName, out string errorMessage)
+        public UserInfo Validate(string account, string password, bool isPasswordMd5, out string userName, out string errorMessage)
         {
             userName = string.Empty;
             errorMessage = string.Empty;
@@ -936,20 +958,20 @@ namespace SiteServer.CMS.Provider
             if (string.IsNullOrEmpty(account))
             {
                 errorMessage = "账号不能为空";
-                return false;
+                return null;
             }
             if (string.IsNullOrEmpty(password))
             {
                 errorMessage = "密码不能为空";
-                return false;
+                return null;
             }
 
-            var userInfo = UserManager.GetUserInfoByAccount(account);
+            var userInfo = GetByAccount(account);
 
             if (string.IsNullOrEmpty(userInfo?.UserName))
             {
                 errorMessage = "帐号或密码错误";
-                return false;
+                return null;
             }
 
             userName = userInfo.UserName;
@@ -957,13 +979,13 @@ namespace SiteServer.CMS.Provider
             if (!userInfo.IsChecked)
             {
                 errorMessage = "此账号未审核，无法登录";
-                return false;
+                return null;
             }
 
             if (userInfo.IsLockedOut)
             {
                 errorMessage = "此账号被锁定，无法登录";
-                return false;
+                return null;
             }
 
             if (ConfigManager.SystemConfigInfo.IsUserLockLogin)
@@ -974,7 +996,7 @@ namespace SiteServer.CMS.Provider
                     if (lockType == EUserLockType.Forever)
                     {
                         errorMessage = "此账号错误登录次数过多，已被永久锁定";
-                        return false;
+                        return null;
                     }
                     if (lockType == EUserLockType.Hours)
                     {
@@ -984,7 +1006,7 @@ namespace SiteServer.CMS.Provider
                         {
                             errorMessage =
                                 $"此账号错误登录次数过多，已被锁定，请等待{hours}小时后重试";
-                            return false;
+                            return null;
                         }
                     }
                 }
@@ -992,12 +1014,13 @@ namespace SiteServer.CMS.Provider
 
             if (!CheckPassword(password, isPasswordMd5, userInfo.Password, EPasswordFormatUtils.GetEnumType(userInfo.PasswordFormat), userInfo.PasswordSalt))
             {
+                DataProvider.UserDao.UpdateLastActivityDateAndCountOfFailedLogin(userInfo);
                 LogUtils.AddUserLog(userInfo.UserName, "用户登录失败", "帐号或密码错误");
                 errorMessage = "帐号或密码错误";
-                return false;
+                return null;
             }
 
-            return true;
+            return userInfo;
         }
 
         public Dictionary<DateTime, int> GetTrackingDictionary(DateTime dateFrom, DateTime dateTo, string xType)

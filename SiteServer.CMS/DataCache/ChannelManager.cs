@@ -7,6 +7,7 @@ using SiteServer.CMS.DataCache.Core;
 using SiteServer.CMS.DataCache.Stl;
 using SiteServer.CMS.Model;
 using SiteServer.CMS.Model.Attributes;
+using SiteServer.CMS.Model.Enumerations;
 using SiteServer.CMS.Plugin;
 using SiteServer.CMS.Plugin.Impl;
 using SiteServer.Plugin;
@@ -21,18 +22,6 @@ namespace SiteServer.CMS.DataCache
         {
             private static readonly object LockObject = new object();
             private static readonly string CacheKey = DataCacheManager.GetCacheKey(nameof(ChannelManager));
-            //private static readonly FileWatcherClass FileWatcher;
-
-            //static ChannelManagerCache()
-            //{
-            //    FileWatcher = new FileWatcherClass(FileWatcherClass.Channel);
-            //    FileWatcher.OnFileChange += FileWatcher_OnFileChange;
-            //}
-
-            //private static void FileWatcher_OnFileChange(object sender, EventArgs e)
-            //{
-            //    CacheManager.Remove(CacheKey);
-            //}
 
             private static void Update(Dictionary<int, Dictionary<int, ChannelInfo>> allDict, Dictionary<int, ChannelInfo> dic, int siteId)
             {
@@ -60,8 +49,16 @@ namespace SiteServer.CMS.DataCache
                 {
                     allDict.Remove(siteId);
                 }
+            }
 
-                //FileWatcher.UpdateCacheFile();
+            public static void Update(int siteId, ChannelInfo channelInfo)
+            {
+                var dict = GetChannelInfoDictionaryBySiteId(siteId);
+
+                lock (LockObject)
+                {
+                    dict[channelInfo.Id] = channelInfo;
+                }
             }
 
             public static Dictionary<int, ChannelInfo> GetChannelInfoDictionaryBySiteId(int siteId)
@@ -79,9 +76,15 @@ namespace SiteServer.CMS.DataCache
             }
         }
 
-        public static void RemoveCache(int siteId)
+        public static void RemoveCacheBySiteId(int siteId)
         {
             ChannelManagerCache.Remove(siteId);
+            StlChannelCache.ClearCache();
+        }
+
+        public static void UpdateCache(int siteId, ChannelInfo channelInfo)
+        {
+            ChannelManagerCache.Update(siteId, channelInfo);
             StlChannelCache.ClearCache();
         }
 
@@ -375,7 +378,7 @@ namespace SiteServer.CMS.DataCache
                 var list = PluginContentManager.GetContentPlugins(nodeInfo, true);
                 if (list != null && list.Count > 0)
                 {
-                    imageHtml += @"<i class=""ion-cube"" style=""font-size: 15px""></i>&nbsp;";
+                    imageHtml += @"<i class=""ion-cube"" style=""font-size: 15px;vertical-align: baseline;""></i>&nbsp;";
                 }
             }
             return imageHtml;
@@ -622,12 +625,13 @@ namespace SiteServer.CMS.DataCache
             return nodeInfo.Additional.ContentAttributesOfDisplay;
         }
 
-        public static List<InputListItem> GetContentAttributesToList(SiteInfo siteInfo, ChannelInfo channelInfo, bool includeAll)
+        public static List<InputListItem> GetContentsColumns(SiteInfo siteInfo, ChannelInfo channelInfo, bool includeAll)
         {
             var items = new List<InputListItem>();
 
             var attributesOfDisplay = TranslateUtils.StringCollectionToStringCollection(channelInfo.Additional.ContentAttributesOfDisplay);
-            var pluginColumns = PluginContentManager.GetContentColumns(channelInfo);
+            var pluginIds = PluginContentManager.GetContentPluginIds(channelInfo);
+            var pluginColumns = PluginContentManager.GetContentColumns(pluginIds);
 
             var styleInfoList = ContentUtility.GetAllTableStyleInfoList(TableStyleManager.GetContentStyleInfoList(siteInfo, channelInfo));
 
@@ -738,6 +742,59 @@ namespace SiteServer.CMS.DataCache
             }
 
             return options;
+        }
+
+        public static bool IsCreatable(SiteInfo siteInfo, ChannelInfo channelInfo)
+        {
+            if (siteInfo == null || channelInfo == null) return false;
+
+            if (!channelInfo.Additional.IsChannelCreatable || !string.IsNullOrEmpty(channelInfo.LinkUrl)) return false;
+
+            var isCreatable = false;
+
+            var linkType = ELinkTypeUtils.GetEnumType(channelInfo.LinkType);
+
+            if (linkType == ELinkType.None)
+            {
+                isCreatable = true;
+            }
+            else if (linkType == ELinkType.NoLinkIfContentNotExists)
+            {
+                var count = ContentManager.GetCount(siteInfo, channelInfo, true);
+                isCreatable = count != 0;
+            }
+            else if (linkType == ELinkType.LinkToOnlyOneContent)
+            {
+                var count = ContentManager.GetCount(siteInfo, channelInfo, true);
+                isCreatable = count != 1;
+            }
+            else if (linkType == ELinkType.NoLinkIfContentNotExistsAndLinkToOnlyOneContent)
+            {
+                var count = ContentManager.GetCount(siteInfo, channelInfo, true);
+                if (count != 0 && count != 1)
+                {
+                    isCreatable = true;
+                }
+            }
+            else if (linkType == ELinkType.LinkToFirstContent)
+            {
+                var count = ContentManager.GetCount(siteInfo, channelInfo, true);
+                isCreatable = count < 1;
+            }
+            else if (linkType == ELinkType.NoLinkIfChannelNotExists)
+            {
+                isCreatable = channelInfo.ChildrenCount != 0;
+            }
+            else if (linkType == ELinkType.LinkToLastAddChannel)
+            {
+                isCreatable = channelInfo.ChildrenCount <= 0;
+            }
+            else if (linkType == ELinkType.LinkToFirstChannel)
+            {
+                isCreatable = channelInfo.ChildrenCount <= 0;
+            }
+
+            return isCreatable;
         }
     }
 

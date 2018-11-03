@@ -1,5 +1,4 @@
-﻿var $apiUrl = $apiConfig.apiUrl;
-var $api = new apiUtils.Api($apiUrl + '/pages/settings/userHome');
+﻿var $api = new apiUtils.Api(apiUrl + '/pages/settings/userHome');
 
 var data = {
   pageLoad: false,
@@ -15,8 +14,9 @@ var data = {
   homeLogoUrl: null,
   homeDefaultAvatarUrl: null,
   userRegistrationAttributes: [],
+  isUserRegistrationGroup: null,
   isHomeAgreement: null,
-  homeAgreement: null,
+  homeAgreementHtml: null,
   styles: null,
 };
 
@@ -29,7 +29,6 @@ var methods = {
 
       $this.config = _.clone(res.value);
       $this.homeDirectory = res.homeDirectory;
-      $this.homeAgreement = res.homeAgreement;
 
       $this.isHomeClosed = res.value.isHomeClosed;
       $this.homeTitle = res.value.homeTitle;
@@ -39,8 +38,10 @@ var methods = {
       if (res.value.userRegistrationAttributes) {
         $this.userRegistrationAttributes = res.value.userRegistrationAttributes.split(',');
       }
+      $this.isUserRegistrationGroup = res.value.isUserRegistrationGroup;
       $this.isHomeAgreement = res.value.isHomeAgreement;
-      $this.uploadUrl = $apiUrl + '/pages/settings/userHome/upload?adminToken=' + res.adminToken;
+      $this.homeAgreementHtml = res.value.homeAgreementHtml;
+      $this.uploadUrl = apiUrl + '/pages/settings/userHome/upload?adminToken=' + res.adminToken;
       $this.styles = res.styles;
 
       $this.pageType = 'list';
@@ -96,8 +97,9 @@ var methods = {
       homeLogoUrl: $this.homeLogoUrl,
       homeDefaultAvatarUrl: $this.homeDefaultAvatarUrl,
       userRegistrationAttributes: $this.userRegistrationAttributes.join(','),
+      isUserRegistrationGroup: $this.isUserRegistrationGroup,
       isHomeAgreement: $this.isHomeAgreement,
-      homeAgreement: $this.homeAgreement
+      homeAgreementHtml: $this.homeAgreementHtml
     }, function (err, res) {
       pageUtils.loading(false);
       if (err) {

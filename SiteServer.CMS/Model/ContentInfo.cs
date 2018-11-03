@@ -55,6 +55,11 @@ namespace SiteServer.CMS.Model
 
 	    }
 
+	    public ContentInfo(ContentInfo contentInfo)
+	    {
+	        Load(contentInfo);
+        }
+
         public int Id
 		{
             get => GetInt(ContentAttribute.Id);
@@ -85,17 +90,23 @@ namespace SiteServer.CMS.Model
             set => Set(ContentAttribute.LastEditUserName, value);
         }
 
-        public string WritingUserName
-        {
-            get => GetString(ContentAttribute.WritingUserName);
-            set => Set(ContentAttribute.WritingUserName, value);
-        }
-
         public DateTime LastEditDate
 		{
             get => GetDateTime(ContentAttribute.LastEditDate, DateTime.Now);
             set => Set(ContentAttribute.LastEditDate, value);
         }
+
+	    public int AdminId
+	    {
+	        get => GetInt(ContentAttribute.AdminId);
+	        set => Set(ContentAttribute.AdminId, value);
+	    }
+
+	    public int UserId
+	    {
+	        get => GetInt(ContentAttribute.UserId);
+	        set => Set(ContentAttribute.UserId, value);
+	    }
 
         public int Taxis
         {
@@ -265,7 +276,7 @@ namespace SiteServer.CMS.Model
             set => Set(ContentAttribute.SettingsXml, value);
         }
 
-	    public override Dictionary<string, object> ToDictionary()
+        public override Dictionary<string, object> ToDictionary()
 	    {
 	        var dict = base.ToDictionary();
 	        //dict.Remove(nameof(SettingsXml));

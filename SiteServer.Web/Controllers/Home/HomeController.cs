@@ -4,19 +4,20 @@ using System.Web.Http;
 using SiteServer.CMS.Core;
 using SiteServer.CMS.DataCache;
 using SiteServer.CMS.Model;
+using SiteServer.CMS.Plugin;
 using SiteServer.CMS.Plugin.Impl;
 using SiteServer.Utils;
 
 namespace SiteServer.API.Controllers.Home
 {
-    [RoutePrefix("api/home")]
+    [RoutePrefix("home")]
     public class HomeController : ApiController
     {
         private const string Route = "";
 
         private const string PageNameRegister = "register";
-        private const string PageNameProfile = "profile";
         private const string PageNameIndex = "index";
+        private const string PageNameProfile = "profile";
         private const string PageNameContents = "contents";
         private const string PageNameContentAdd = "contentAdd";
 
@@ -28,13 +29,17 @@ namespace SiteServer.API.Controllers.Home
                 var request = new RequestImpl();
                 var pageName = request.GetQueryString("pageName");
 
-                if (pageName == PageNameRegister || pageName == PageNameProfile)
+                if (pageName == PageNameRegister)
                 {
-                    return Ok(GetRegisterProfile(request));
+                    return Ok(GetRegister(request));
                 }
                 if (pageName == PageNameIndex)
                 {   
                     return Ok(GetIndex(request));
+                }
+                if (pageName == PageNameProfile)
+                {
+                    return Ok(GetProfile(request));
                 }
                 if (pageName == PageNameContents)
                 {
@@ -47,8 +52,8 @@ namespace SiteServer.API.Controllers.Home
 
                 return Ok(new
                 {
-                    Value = ConfigManager.Instance.SystemConfigInfo,
-                    request.IsUserLoggin
+                    Value = request.UserInfo,
+                    Config = ConfigManager.Instance.SystemConfigInfo
                 });
             }
             catch (Exception ex)
@@ -58,19 +63,22 @@ namespace SiteServer.API.Controllers.Home
             }
         }
 
-        public object GetRegisterProfile(RequestImpl request)
+        public object GetRegister(RequestImpl request)
         {
             return new
             {
-                Value = ConfigManager.Instance.SystemConfigInfo,
-                request.IsUserLoggin,
-                Styles = TableStyleManager.GetUserStyleInfoList()
+                Value = request.UserInfo,
+                Config = ConfigManager.Instance.SystemConfigInfo,
+                Styles = TableStyleManager.GetUserStyleInfoList(),
+                Groups = UserGroupManager.GetUserGroupInfoList()
             };
         }
 
         public object GetIndex(RequestImpl request)
         {
             var menus = new List<object>();
+            var defaultPageUrl = string.Empty;
+
             if (request.IsUserLoggin)
             {
                 var userMenus = UserMenuManager.GetAllUserMenuInfoList();
@@ -88,35 +96,50 @@ namespace SiteServer.API.Controllers.Home
 
                         children.Add(new
                         {
-                            menuInfo2.Title,
-                            menuInfo2.Url,
+                            menuInfo2.Text,
                             menuInfo2.IconClass,
-                            menuInfo2.IsOpenWindow
+                            menuInfo2.Href,
+                            menuInfo2.Target
                         });
                     }
 
                     menus.Add(new
                     {
-                        menuInfo1.Title,
-                        menuInfo1.Url,
+                        menuInfo1.Text,
                         menuInfo1.IconClass,
-                        menuInfo1.IsOpenWindow,
+                        menuInfo1.Href,
+                        menuInfo1.Target,
                         Menus = children
                     });
                 }
+
+                defaultPageUrl = PluginMenuManager.GetHomeDefaultPageUrl();
             }
 
             return new
             {
-                Value = ConfigManager.Instance.SystemConfigInfo,
-                request.IsUserLoggin,
-                Menus = menus
+                Value = request.UserInfo,
+                Config = ConfigManager.Instance.SystemConfigInfo,
+                Menus = menus,
+                DefaultPageUrl = defaultPageUrl
+            };
+        }
+
+        public object GetProfile(RequestImpl request)
+        {
+            return new
+            {
+                Value = request.UserInfo,
+                Config = ConfigManager.Instance.SystemConfigInfo,
+                Styles = TableStyleManager.GetUserStyleInfoList()
             };
         }
 
         public object GetContents(RequestImpl request)
         {
             var requestSiteId = request.SiteId;
+            var requestChannelId = request.ChannelId;
+
             var sites = new List<object>();
             var channels = new List<object>();
             object site = null;
@@ -153,7 +176,7 @@ namespace SiteServer.API.Controllers.Home
                     foreach (var permissionChannelId in channelIdList)
                     {
                         var permissionChannelInfo = ChannelManager.GetChannelInfo(siteInfo.Id, permissionChannelId);
-                        if (channelInfo == null)
+                        if (channelInfo == null || requestChannelId == permissionChannelId)
                         {
                             channelInfo = permissionChannelInfo;
                         }
@@ -184,8 +207,8 @@ namespace SiteServer.API.Controllers.Home
 
             return new
             {
-                Value = ConfigManager.Instance.SystemConfigInfo,
-                request.IsUserLoggin,
+                Value = request.UserInfo,
+                Config = ConfigManager.Instance.SystemConfigInfo,
                 Sites = sites,
                 Channels = channels,
                 Site = site,
@@ -196,14 +219,19 @@ namespace SiteServer.API.Controllers.Home
         public object GetContentAdd(RequestImpl request)
         {
             var requestSiteId = request.SiteId;
+            var requestChannelId = request.ChannelId;
+            var requestContentId = request.ContentId;
+
             var sites = new List<object>();
             var channels = new List<object>();
             object site = null;
             object channel = null;
             List<string> groupNames = null;
+            List<string> tagNames = null;
             ContentInfo contentInfo = null;
             List<TableStyleInfo> styles = null;
-            
+            List<KeyValuePair<int, string>> checkedLevels = null;
+            var checkedLevel = 0;
 
             if (request.IsUserLoggin)
             {
@@ -236,7 +264,7 @@ namespace SiteServer.API.Controllers.Home
                     foreach (var permissionChannelId in channelIdList)
                     {
                         var permissionChannelInfo = ChannelManager.GetChannelInfo(siteInfo.Id, permissionChannelId);
-                        if (channelInfo == null)
+                        if (channelInfo == null || permissionChannelInfo.Id == requestChannelId)
                         {
                             channelInfo = permissionChannelInfo;
                         }
@@ -255,6 +283,7 @@ namespace SiteServer.API.Controllers.Home
                     };
 
                     groupNames = ContentGroupManager.GetGroupNameList(siteInfo.Id);
+                    tagNames = ContentTagManager.GetTagNameList(siteInfo.Id);
                 }
 
                 if (channelInfo != null)
@@ -267,24 +296,47 @@ namespace SiteServer.API.Controllers.Home
 
                     styles = TableStyleManager.GetContentStyleInfoList(siteInfo, channelInfo);
 
-                    contentInfo = new ContentInfo(new
+                    var checkKeyValuePair = CheckManager.GetUserCheckLevel(request.AdminPermissionsImpl, siteInfo, siteInfo.Id);
+                    checkedLevels = CheckManager.GetCheckedLevels(siteInfo, checkKeyValuePair.Key, checkedLevel, true);
+
+                    if (requestContentId != 0)
                     {
-                        SiteId = siteInfo.Id,
-                        ChannelId = channelInfo.Id
-                    });
+                        checkedLevels.Insert(0, new KeyValuePair<int, string>(CheckManager.LevelInt.NotChange, CheckManager.Level.NotChange));
+                        checkedLevel = CheckManager.LevelInt.NotChange;
+
+                        contentInfo = ContentManager.GetContentInfo(siteInfo, channelInfo, requestContentId);
+                        if (contentInfo != null &&
+                            (contentInfo.SiteId != siteInfo.Id || contentInfo.ChannelId != channelInfo.Id))
+                        {
+                            contentInfo = null;
+                        }
+                    }
+                    else
+                    {
+                        contentInfo = new ContentInfo(new
+                        {
+                            Id = 0,
+                            SiteId = siteInfo.Id,
+                            ChannelId = channelInfo.Id,
+                            AddDate = DateTime.Now
+                        });
+                    }
                 }
             }
 
             return new
             {
-                Value = ConfigManager.Instance.SystemConfigInfo,
-                request.IsUserLoggin,
+                Value = request.UserInfo,
+                Config = ConfigManager.Instance.SystemConfigInfo,
                 Sites = sites,
                 Channels = channels,
                 Site = site,
                 Channel = channel,
-                GroupNames = groupNames,
+                AllGroupNames = groupNames,
+                AllTagNames = tagNames,
                 Styles = styles,
+                CheckedLevels = checkedLevels,
+                CheckedLevel = checkedLevel,
                 Content = contentInfo,
             };
         }

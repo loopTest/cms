@@ -1,6 +1,5 @@
-﻿var $apiUrl = $apiConfig.apiUrl;
-var $api = new apiUtils.Api($apiUrl + '/pages/settings/userMenu');
-var $apiReset = new apiUtils.Api($apiUrl + '/pages/settings/userMenu/actions/reset');
+﻿var $api = new apiUtils.Api(apiUrl + '/pages/settings/userMenu');
+var $apiReset = new apiUtils.Api(apiUrl + '/pages/settings/userMenu/actions/reset');
 
 var data = {
   pageLoad: false,
@@ -142,10 +141,10 @@ var methods = {
       isDisabled: false,
       parentId: parentId,
       taxis: taxis + 1,
-      title: '',
-      url: '',
+      text: '',
+      href: '',
       iconClass: '',
-      isOpenWindow: false,
+      target: '',
       isGroup: false,
       groupIds: []
     };
@@ -175,7 +174,7 @@ var methods = {
 
     pageUtils.alertDelete({
       title: '删除用户菜单',
-      text: '此操作将删除用户菜单 ' + item.title + '，确定吗？',
+      text: '此操作将删除用户菜单 ' + item.text + '，确定吗？',
       callback: function () {
         $this.delete(item.id);
       }

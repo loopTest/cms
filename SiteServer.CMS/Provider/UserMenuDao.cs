@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Dapper;
-using Dapper.Contrib.Extensions;
 using SiteServer.CMS.Data;
 using SiteServer.CMS.DataCache;
 using SiteServer.CMS.Model;
@@ -53,15 +53,9 @@ namespace SiteServer.CMS.Provider
             },
             new TableColumn
             {
-                AttributeName = nameof(UserMenuInfo.Title),
+                AttributeName = nameof(UserMenuInfo.Text),
                 DataType = DataType.VarChar,
                 DataLength = 50
-            },
-            new TableColumn
-            {
-                AttributeName = nameof(UserMenuInfo.Url),
-                DataType = DataType.VarChar,
-                DataLength = 200
             },
             new TableColumn
             {
@@ -71,19 +65,58 @@ namespace SiteServer.CMS.Provider
             },
             new TableColumn
             {
-                AttributeName = nameof(UserMenuInfo.IsOpenWindow),
-                DataType = DataType.Boolean
+                AttributeName = nameof(UserMenuInfo.Href),
+                DataType = DataType.VarChar,
+                DataLength = 200
+            },
+            new TableColumn
+            {
+                AttributeName = nameof(UserMenuInfo.Target),
+                DataType = DataType.VarChar,
+                DataLength = 50
             }
         };
 
         public int Insert(UserMenuInfo menuInfo)
         {
-            int menuId;
+            var sqlString =
+                $@"
+INSERT INTO {TableName} (
+    {nameof(UserMenuInfo.SystemId)}, 
+    {nameof(UserMenuInfo.GroupIdCollection)}, 
+    {nameof(UserMenuInfo.IsDisabled)}, 
+    {nameof(UserMenuInfo.ParentId)}, 
+    {nameof(UserMenuInfo.Taxis)}, 
+    {nameof(UserMenuInfo.Text)}, 
+    {nameof(UserMenuInfo.IconClass)}, 
+    {nameof(UserMenuInfo.Href)}, 
+    {nameof(UserMenuInfo.Target)}
+) VALUES (
+    @{nameof(UserMenuInfo.SystemId)}, 
+    @{nameof(UserMenuInfo.GroupIdCollection)}, 
+    @{nameof(UserMenuInfo.IsDisabled)}, 
+    @{nameof(UserMenuInfo.ParentId)}, 
+    @{nameof(UserMenuInfo.Taxis)}, 
+    @{nameof(UserMenuInfo.Text)}, 
+    @{nameof(UserMenuInfo.IconClass)}, 
+    @{nameof(UserMenuInfo.Href)}, 
+    @{nameof(UserMenuInfo.Target)}
+)";
 
-            using (var connection = GetConnection())
+            var parms = new IDataParameter[]
             {
-                menuId = (int)connection.Insert(menuInfo);
-            }
+                GetParameter($"@{nameof(UserMenuInfo.SystemId)}", DataType.VarChar, 50, menuInfo.SystemId),
+                GetParameter($"@{nameof(UserMenuInfo.GroupIdCollection)}", DataType.VarChar, 200, menuInfo.GroupIdCollection),
+                GetParameter($"@{nameof(UserMenuInfo.IsDisabled)}", DataType.Boolean, menuInfo.IsDisabled),
+                GetParameter($"@{nameof(UserMenuInfo.ParentId)}", DataType.Integer, menuInfo.ParentId),
+                GetParameter($"@{nameof(UserMenuInfo.Taxis)}", DataType.Integer, menuInfo.Taxis),
+                GetParameter($"@{nameof(UserMenuInfo.Text)}", DataType.VarChar, 50, menuInfo.Text),
+                GetParameter($"@{nameof(UserMenuInfo.IconClass)}", DataType.VarChar, 50, menuInfo.IconClass),
+                GetParameter($"@{nameof(UserMenuInfo.Href)}", DataType.VarChar, 200, menuInfo.Href),
+                GetParameter($"@{nameof(UserMenuInfo.Target)}", DataType.VarChar, 50, menuInfo.Target)
+            };
+
+            var menuId = ExecuteNonQueryAndReturnId(TableName, nameof(UserMenuInfo.Id), sqlString, parms);
 
             UserMenuManager.ClearCache();
 
@@ -92,21 +125,48 @@ namespace SiteServer.CMS.Provider
 
         public void Update(UserMenuInfo menuInfo)
         {
-            using (var connection = GetConnection())
+            var sqlString = $@"UPDATE {TableName} SET
+                {nameof(UserMenuInfo.SystemId)} = @{nameof(UserMenuInfo.SystemId)}, 
+                {nameof(UserMenuInfo.GroupIdCollection)} = @{nameof(UserMenuInfo.GroupIdCollection)}, 
+                {nameof(UserMenuInfo.IsDisabled)} = @{nameof(UserMenuInfo.IsDisabled)}, 
+                {nameof(UserMenuInfo.ParentId)} = @{nameof(UserMenuInfo.ParentId)}, 
+                {nameof(UserMenuInfo.Taxis)} = @{nameof(UserMenuInfo.Taxis)}, 
+                {nameof(UserMenuInfo.Text)} = @{nameof(UserMenuInfo.Text)}, 
+                {nameof(UserMenuInfo.IconClass)} = @{nameof(UserMenuInfo.IconClass)}, 
+                {nameof(UserMenuInfo.Href)} = @{nameof(UserMenuInfo.Href)}, 
+                {nameof(UserMenuInfo.Target)} = @{nameof(UserMenuInfo.Target)}
+            WHERE {nameof(UserMenuInfo.Id)} = @{nameof(UserMenuInfo.Id)}";
+
+            IDataParameter[] parameters =
             {
-                connection.Update(menuInfo);
-            }
+                GetParameter(nameof(UserMenuInfo.SystemId), DataType.VarChar, 50, menuInfo.SystemId),
+                GetParameter(nameof(UserMenuInfo.GroupIdCollection), DataType.VarChar, 200, menuInfo.GroupIdCollection),
+                GetParameter(nameof(UserMenuInfo.IsDisabled), DataType.Boolean, menuInfo.IsDisabled),
+                GetParameter(nameof(UserMenuInfo.ParentId), DataType.Integer, menuInfo.ParentId),
+                GetParameter(nameof(UserMenuInfo.Taxis), DataType.Integer, menuInfo.Taxis),
+                GetParameter(nameof(UserMenuInfo.Text), DataType.VarChar, 50, menuInfo.Text),
+                GetParameter(nameof(UserMenuInfo.IconClass), DataType.VarChar, 50, menuInfo.IconClass),
+                GetParameter(nameof(UserMenuInfo.Href), DataType.VarChar, 200, menuInfo.Href),
+                GetParameter(nameof(UserMenuInfo.Target), DataType.VarChar, 50, menuInfo.Target),
+                GetParameter(nameof(UserMenuInfo.Id), DataType.Integer, menuInfo.Id)
+            };
+
+            ExecuteNonQuery(sqlString, parameters);
 
             UserMenuManager.ClearCache();
         }
 
         public void Delete(int menuId)
         {
-            using (var connection = GetConnection())
+            var sqlString = $"DELETE FROM {TableName} WHERE {nameof(UserMenuInfo.Id)} = @{nameof(UserMenuInfo.Id)} OR {nameof(UserMenuInfo.ParentId)} = @{nameof(UserMenuInfo.ParentId)}";
+
+            var parms = new IDataParameter[]
             {
-                connection.Delete(new UserMenuInfo { Id = menuId });
-                connection.Delete(new UserMenuInfo { ParentId = menuId });
-            }
+                GetParameter($"@{nameof(UserMenuInfo.Id)}", DataType.Integer, menuId),
+                GetParameter($"@{nameof(UserMenuInfo.ParentId)}", DataType.Integer, menuId)
+            };
+
+            ExecuteNonQuery(sqlString, parms);
 
             UserMenuManager.ClearCache();
         }

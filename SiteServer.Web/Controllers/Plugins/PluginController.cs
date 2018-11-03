@@ -11,7 +11,6 @@ using SiteServer.Plugin;
 
 namespace SiteServer.API.Controllers.Plugins
 {
-    [RoutePrefix("api")]
     public class PluginController : ApiController
     {
         [HttpGet, Route(ApiRoutePlugin.Route)]
@@ -19,7 +18,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, null), null, null, null)));
@@ -36,7 +35,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, routeAction), null, null, routeAction)));
@@ -53,7 +52,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, null), routeResource, null, null)));
@@ -70,7 +69,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, routeAction), routeResource, null, routeAction)));
@@ -87,7 +86,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, null), routeResource, routeId, null)));
@@ -104,7 +103,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiGet(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, routeAction), routeResource, routeId, routeAction)));
@@ -121,7 +120,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, null), null, null, null)));
@@ -138,7 +137,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, routeAction), null, null, routeAction)));
@@ -155,7 +154,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, null), routeResource, null, null)));
@@ -172,7 +171,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, routeAction), routeResource, null, routeAction)));
@@ -189,7 +188,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, null), routeResource, routeId, null)));
@@ -206,7 +205,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPost(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, routeAction), routeResource, routeId, routeAction)));
@@ -223,7 +222,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, null), null, null, null)));
@@ -240,7 +239,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, routeAction), null, null, routeAction)));
@@ -257,7 +256,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, null), routeResource, null, null)));
@@ -274,7 +273,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, routeAction), routeResource, null, routeAction)));
@@ -291,7 +290,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, null), routeResource, routeId, null)));
@@ -308,7 +307,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiPut(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, routeAction), routeResource, routeId, routeAction)));
@@ -325,7 +324,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, null), null, null, null)));
@@ -342,7 +341,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(null, null, routeAction), null, null, routeAction)));
@@ -359,7 +358,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, null), routeResource, null, null)));
@@ -376,7 +375,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, null, routeAction), routeResource, null, routeAction)));
@@ -393,7 +392,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, null), routeResource, routeId, null)));
@@ -410,7 +409,7 @@ namespace SiteServer.API.Controllers.Plugins
         {
             try
             {
-                var request = new RequestImpl(pluginId);
+                var request = new RequestImpl();
                 var service = PluginManager.GetService(pluginId);
 
                 return GetHttpActionResult(service.OnRestApiDelete(new RestApiEventArgs(request, ApiRoutePlugin.GetRoute(routeResource, routeId, routeAction), routeResource, routeId, routeAction)));

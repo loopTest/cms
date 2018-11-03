@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
@@ -177,6 +178,32 @@ namespace SiteServer.Utils
             }
 
             return parameter;
+        }
+
+        public static string GetSqlColumnInList(string columnName, List<int> idList)
+        {
+            if (idList == null || idList.Count == 0) return string.Empty;
+
+            if (idList.Count < 1000)
+            {
+                return $"{columnName} IN ({TranslateUtils.ToSqlInStringWithoutQuote(idList)})";
+            }
+
+            var sql = new StringBuilder();
+            sql.Append(" ").Append(columnName).Append(" IN ( ");
+            for (var i = 0; i < idList.Count; i++)
+            {
+                sql.Append(idList[i] + ",");
+                if ((i + 1) % 1000 == 0 && i + 1 < idList.Count)
+                {
+                    sql.Length -= 1;
+                    sql.Append(" ) OR ").Append(columnName).Append(" IN (");
+                }
+            }
+            sql.Length -= 1;
+            sql.Append(" )");
+
+            return $"({sql})";
         }
 
         public static string GetInStr(string columnName, string inStr)
@@ -489,6 +516,30 @@ SELECT * FROM (
             return retval;
         }
 
+        public static string GetDropColumnsSqlString(string tableName, string columnName)
+        {
+            var retval = string.Empty;
+
+            if (WebConfigUtils.DatabaseType == DatabaseType.MySql)
+            {
+                retval = $"ALTER TABLE `{tableName}` DROP COLUMN `{columnName}`";
+            }
+            else if (WebConfigUtils.DatabaseType == DatabaseType.SqlServer)
+            {
+                retval = $"ALTER TABLE [{tableName}] DROP COLUMN [{columnName}]";
+            }
+            else if (WebConfigUtils.DatabaseType == DatabaseType.PostgreSql)
+            {
+                retval = $"ALTER TABLE {tableName} DROP COLUMN {columnName}";
+            }
+            else if (WebConfigUtils.DatabaseType == DatabaseType.Oracle)
+            {
+                retval = $"ALTER TABLE {tableName} DROP COLUMN {columnName}";
+            }
+
+            return retval;
+        }
+
         public static string GetAutoIncrementDataType(bool alterTable = false)
         {
             var retval = string.Empty;
@@ -712,7 +763,7 @@ SELECT * FROM (
             }
             if (type == DataType.DateTime)
             {
-                return NpgsqlDbType.TimestampTZ;
+                return NpgsqlDbType.TimestampTz;
             }
             if (type == DataType.Decimal)
             {

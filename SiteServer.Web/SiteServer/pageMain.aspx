@@ -13,7 +13,6 @@
   <link href="assets/css/pages.css" rel="stylesheet" type="text/css" />
   <link href="assets/css/menu.css" rel="stylesheet" type="text/css" />
   <link href="assets/css/ionicons.min.css" rel="stylesheet" type="text/css" />
-  <link href="assets/icons/favicon.png" rel="icon" type="image/png">
   <script type="text/javascript" src="assets/jquery/jquery-1.9.1.min.js"></script>
   <script type="text/javascript">
     if (window.top != self) {
@@ -137,7 +136,7 @@
     </div>
 
     <div class="content-page" id="content">
-      <iframe id="frmMain" frameborder="0" id="right" name="right" src="dashboard.cshtml" style="width:100%; height: 100%"></iframe>
+      <iframe id="frmMain" frameborder="0" id="right" name="right" src="<%=DefaultPageUrl%>" style="width:100%; height: 100%"></iframe>
     </div>
   </div>
 </body>
